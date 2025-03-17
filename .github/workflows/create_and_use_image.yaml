@@ -1,0 +1,25 @@
+on:
+    workflow_dispatch
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        services:
+          # - INTERMEDIARY DOCKER REGISTRY -
+          # This registry will contain the intermediary images
+          # that are used during the multi-stage build
+          registry:
+            image: registry:2
+            ports:
+              - 5000:5000
+        steps:
+        - uses: actions/checkout@v2
+        - uses: docker/setup-buildx-action@v2
+          with:
+            driver-opts: network=host # Required for the buildx container to access the intermediary registry
+        # An example of how to run a multi-stage build with an intermediary registry
+        - name: Build the Docker image
+          run: /bin/sh ./build.sh --intermediary-registry localhost:5000
+        # Verify that the actual final product of the build is available
+        - name: Run the Docker image
+          run: docker run step2:latest
